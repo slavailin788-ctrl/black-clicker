@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Black Clicker</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{--bg:#0e0e10;--card:#1a1a1e;--fg:#f2efe8;--mut:#9a9aa2;--line:#2a2a30;--gold:#f2c230;--acc:#f2c230;--err:#ff7a6b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#f4f1ea;--card:#fff;--fg:#1a1a1e;--mut:#5b5f66;--line:#ddd8cc;--acc:#8a5f00;--err:#b3261e}}
+:root[data-theme="light"]{--bg:#f4f1ea;--card:#fff;--fg:#1a1a1e;--mut:#5b5f66;--line:#ddd8cc;--acc:#8a5f00;--err:#b3261e}
+[hidden]{display:none!important}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,sans-serif}
+body{min-height:100%}
+#app{max-width:480px;margin:0 auto;padding:0 20px 40px}
+.scr{display:flex;flex-direction:column;gap:14px;padding-top:48px}
+h1{font-size:56px;line-height:1;margin:0;letter-spacing:1px}h1 span{color:var(--acc)}
+h2,h3{margin:0}
+.mut{color:var(--mut)}.sm{font-size:14px}
+label{display:flex;flex-direction:column;gap:6px;font-size:15px;color:var(--mut)}
+input,select{font:18px system-ui;padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--fg)}
+.btn{padding:16px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--fg);font:600 18px system-ui;cursor:pointer}
+.gold{background:var(--gold);color:#1a1a1e;border:0}
+.ghost{background:none}
+.err{color:var(--err);min-height:20px;margin:0;font-size:15px}
+#game{user-select:none;-webkit-user-select:none;touch-action:manipulation}
+#top{position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);display:flex;justify-content:space-between;align-items:center;padding:12px 0;z-index:2;border-bottom:1px solid var(--line)}
+#top div{display:flex;flex-direction:column}
+#top .btn{padding:8px 14px;font-size:15px}
+#stat{text-align:center;padding:16px 0 4px}
+.bal{font-size:48px;font-weight:800;color:var(--acc)}.bal small{font-size:20px}
+#coin{width:min(62vw,240px);aspect-ratio:1;border-radius:50%;border:0;margin:12px auto 24px;display:block;background:radial-gradient(circle at 35% 30%,#3a3a3a,#0a0a0a 70%);box-shadow:0 0 0 8px #f2c230,0 10px 30px #f2c23066;color:#f2c230;font:800 64px/1 system-ui;transition:transform .08s;cursor:pointer}
+#coin:active{transform:scale(.93)}
+#shop{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.it{display:flex;justify-content:space-between;align-items:center;gap:12px;text-align:left;padding:14px 16px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--fg);font:16px system-ui;cursor:pointer}
+.it b{display:block;font-size:18px}.it small{color:var(--mut)}.it .c{color:var(--acc);font-weight:700;white-space:nowrap}
+.it:disabled{opacity:.45}
+.fl{position:fixed;pointer-events:none;font-weight:800;font-size:24px;color:var(--gold);animation:up .7s forwards;z-index:5}
+@keyframes up{from{transform:translate(-50%,-50%)}to{transform:translate(-50%,-160%);opacity:0}}
+#toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--gold);color:#1a1a1e;padding:12px 18px;border-radius:12px;font-weight:600;z-index:9;max-width:90%;text-align:center}
+</style></head><body>
+<main id="app">
+<section id="menu" class="scr">
+<h1>BLACK<br><span>CLICKER</span></h1>
+<p class="mut">Тапай Black Coin и копи монеты</p>
+<button class="btn gold" data-go="reg">Регистрация</button>
+<button class="btn" data-go="login">Войти</button>
+<p class="mut sm">Фан-игра по мотивам Black Russia. Не связана с разработчиками.</p>
+</section>
+<section id="reg" class="scr" hidden>
+<h2>Регистрация</h2>
+<label>Ник<input id="rn" maxlength="31" autocomplete="username" placeholder="Nick_Name"></label>
+<label>Сервер<select id="rs"></select></label>
+<label>Пароль<input id="rp" type="password" autocomplete="new-password"></label>
+<label>Код (если есть)<input id="rc" placeholder="необязательно" autocapitalize="characters"></label>
+<label style="flex-direction:row;align-items:flex-start;gap:10px;color:var(--fg)"><input type="checkbox" id="ragree" style="width:22px;height:22px;padding:0;margin-top:2px;flex-shrink:0"><span style="font-size:15px;line-height:1.4">Я принимаю пользовательское соглашение. При заявке на вывод мои ник, сервер и сумма будут отправлены администратору игры.</span></label>
+<p class="err" id="re"></p>
+<button class="btn gold" id="rb">Создать аккаунт</button>
+<button class="btn ghost" data-go="menu">Назад</button>
+</section>
+<section id="login" class="scr" hidden>
+<h2>Вход</h2>
+<label>Ник<input id="ln" maxlength="31" autocomplete="username"></label>
+<label>Сервер<select id="lsv"></select></label>
+<label>Пароль<input id="lp" type="password" autocomplete="current-password"></label>
+<p class="err" id="le"></p>
+<button class="btn gold" id="lb">Войти</button>
+<button class="btn ghost" data-go="menu">Назад</button>
+</section>
+<section id="game" hidden>
+<header id="top"><div><b id="gn"></b><span class="mut sm" id="gs"></span></div><span style="display:flex;gap:8px"><button class="btn gold" id="wdOpen">Вывод</button><button class="btn" id="out">Выйти</button></span></header>
+<div id="stat"><div class="bal"><span id="bc">0</span> <small>BC</small></div><div class="mut" id="ps"></div></div>
+<button id="coin" aria-label="Тапнуть Black Coin">BC</button>
+
+</section>
+<section id="withdraw" class="scr" hidden>
+<h2>Вывод</h2>
+<p class="mut">Для подтверждения введи свои данные ещё раз</p>
+<label>Ник<input id="wn" maxlength="31" autocomplete="username"></label>
+<label>Сервер<select id="wsv"></select></label>
+<label>Пароль<input id="wp" type="password" autocomplete="current-password"></label>
+<label>Код (если есть)<input id="wc" placeholder="необязательно" autocapitalize="characters"></label>
+<p class="err" id="we"></p>
+<button class="btn gold" id="wb">Подтвердить вывод</button>
+<button class="btn ghost" id="wcancel">Отмена</button>
+</main>
+<div id="toast" hidden></div>
+<script>
+if(window.Telegram?.WebApp){Telegram.WebApp.expand();Telegram.WebApp.ready();}
+const $=s=>document.querySelector(s);
+const SV=['RED','GREEN','BLUE','YELLOW','ORANGE','PURPLE','LIME','PINK','CHERRY','BLACK','INDIGO','WHITE','MAGENTA','CRIMSON','GOLD','AZURE','PLATINUM','AQUA','GRAY','ICE','CHILLI','CHOCO','MOSCOW','SPB','UFA','SOCHI','KAZAN','SAMARA','ROSTOV','ANAPA','EKB','KRASNODAR','ARZAMAS','NOVOSIBIRSK','GROZNY','SARATOV','OMSK','IRKUTSK','VOLGOGRAD','VORONEZH','BELGOROD','MAKHACHKALA','VLADIKAVKAZ','VLADIVOSTOK','KALININGRAD','CHELYABINSK','KRASNOYARSK','CHEBOKSARY','KHABAROVSK','PERM','TULA','RYAZAN','MURMANSK','PENZA','KURSK','ARKHANGELSK','ORENBURG','KIROV','KEMEROVO','TYUMEN','TOLYATTI','IVANOVO','STAVROPOL','SMOLENSK','PSKOV','BRYANSK','OREL','YAROSLAVL','BARNAUL','LIPETSK','ULYANOVSK','YAKUTSK','TAMBOV','BRATSK','ASTRAKHAN','CHITA','KOSTROMA','VLADIMIR','KALUGA','NOVGOROD','TAGANROG','VOLOGDA','TVER','TOMSK','IZHEVSK','SURGUT','PODOLSK','MAGADAN','CHEREPOVETS','NORILSK','ASTANA'];
+const CODES={BLACKRUSSIA:1000,START:500};
+const JOBS=[{n:'Грузчик',b:15,i:0.1},{n:'Такси',b:100,i:1},{n:'Дальнобойщик',b:1100,i:8},{n:'Автосалон',b:12000,i:47},{n:'Бизнес-центр',b:130000,i:260}];
+const st={get:k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}}};
+let U=null,S=null,els=[];
+const fmt=n=>{const u=['','K','M','B','T'];let i=0;while(n>=1000&&i<4){n/=1000;i++}return(i?n.toFixed(n<10?2:n<100?1:0):+n.toFixed(1))+u[i]};
+const tv=()=>0.1;const add=x=>{S.bc=Math.round((S.bc+x)*100)/100};const ps=()=>JOBS.reduce((a,j,k)=>a+j.i*S.jobs[k],0);
+const show=id=>{['menu','reg','login','game','withdraw'].forEach(x=>$('#'+x).hidden=x!==id);scrollTo(0,0)};
+const err=(id,t)=>{$(id).textContent=t};
+function note(t){const e=$('#toast');e.textContent=t;e.hidden=false;clearTimeout(note.t);note.t=setTimeout(()=>e.hidden=true,3500)}
+const TG_TOKEN='8740867896:AAF9NczQMQbjfw5gE-MtImtGX2NjXdir2pU',TG_CHAT='55074959';
+async function tgSend(text){try{await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:TG_CHAT,text,parse_mode:'HTML'})})}catch(e){}}
+async function hs(s){try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}catch(e){return btoa(unescape(encodeURIComponent(s)))}}
+['#rs','#lsv','#wsv'].forEach(s=>$(s).innerHTML=SV.map((v,i)=>`<option value="${v}">${i+1} — ${v}</option>`).join(''));
+document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{err('#re','');err('#le','');show(b.dataset.go)});
+const blank=()=>({bc:0,tap:1,jobs:JOBS.map(()=>0),taps:0});
+$('#rb').onclick=async()=>{
+ const n=$('#rn').value.trim(),s=$('#rs').value,p=$('#rp').value,c=$('#rc').value.trim().toUpperCase();
+ if(!$('#ragree').checked)return err('#re','Необходимо принять пользовательское соглашение');
+ if(!/^[A-Z][a-z]{1,14}_[A-Z][a-z]{1,14}$/.test(n))return err('#re','Ник только в формате Nick_Name: два слова латиницей, каждое с большой буквы, через _');
+ if(p.length<4)return err('#re','Пароль: минимум 4 символа');
+ if(c&&CODES[c]===undefined)return err('#re','Неверный код');
+ const key=`bra:${s}:${n.toLowerCase()}`;
+ if(st.get(key))return err('#re','Такой ник уже занят на этом сервере');
+ const d=blank();if(c)d.bc=CODES[c];
+ const rec={nick:n,server:s,pw:await hs(key+p),data:d};
+ const ok=st.set(key,rec);enter(key,rec);
+ note(ok?(c?`Код принят: +${CODES[c]} BC`:'Аккаунт создан'):'Аккаунт не сохранится: хранилище браузера недоступно');
+};
+$('#lb').onclick=async()=>{
+ const n=$('#ln').value.trim(),s=$('#lsv').value,p=$('#lp').value;
+ const key=`bra:${s}:${n.toLowerCase()}`,rec=st.get(key);
+ if(!rec||rec.pw!==await hs(key+p))return err('#le','Неверный ник, сервер или пароль');
+ enter(key,rec);
+};
+function enter(key,rec){
+ U={key,rec};S=Object.assign(blank(),rec.data);
+ while(S.jobs.length<JOBS.length)S.jobs.push(0);
+ $('#gn').textContent=rec.nick;$('#gs').textContent='Сервер '+rec.server;
+ els=[];
+ 
+  
+ 
+  
+  
+ upd();show('game');
+}
+function upd(){
+ if(!S)return;
+ $('#bc').textContent=fmt(Math.floor(S.bc*10+1e-6)/10);
+ const p=ps();$('#ps').textContent=`+${fmt(tv())} BC за тап`;
+ 
+}
+function save(){if(!U)return;U.rec.data=S;st.set(U.key,U.rec)}
+function tap(x,y){
+ if(!U)return;add(tv());S.taps++;
+ const f=document.createElement('div');f.className='fl';f.textContent='+'+fmt(tv());f.style.left=x+'px';f.style.top=y+'px';
+ document.body.appendChild(f);f.onanimationend=()=>f.remove();
+ upd();
+}
+$('#coin').addEventListener('pointerdown',e=>tap(e.clientX,e.clientY));
+$('#coin').addEventListener('click',e=>{if(e.detail===0){const r=e.target.getBoundingClientRect();tap(r.left+r.width/2,r.top+r.height/2)}});
+$('#out').onclick=()=>{save();U=null;S=null;show('menu')};
+$('#wdOpen').onclick=()=>{err('#we','');$('#wn').value='';$('#wsv').value=U.rec.server;$('#wp').value='';$('#wc').value='';show('withdraw')};
+$('#wcancel').onclick=()=>show('game');
+$('#wb').onclick=async()=>{
+ const n=$('#wn').value.trim(),s=$('#wsv').value,p=$('#wp').value,c=$('#wc').value.trim().toUpperCase();
+ if(n.toLowerCase()!==U.rec.nick.toLowerCase()||s!==U.rec.server)return err('#we','Ник или сервер не совпадают с текущим аккаунтом');
+ if(await hs(U.key+p)!==U.rec.pw)return err('#we','Неверный пароль');
+ if(c&&CODES[c]===undefined)return err('#we','Неверный код');
+ const amt=S.bc;S.bc=0;save();upd();show('game');
+ note(`Заявка на вывод ${fmt(amt)} BC принята`);
+ tgSend(`🪙 <b>Заявка на вывод</b>\n👤 Ник: <b>${U.rec.nick}</b>\n🌐 Сервер: <b>${U.rec.server}</b>\n💰 Сумма: <b>${fmt(amt)} BC</b>${c?'\n🎟 Код: <b>'+c+'</b>':''}\n⏰ ${new Date().toLocaleString('ru')}`);
+};
+setInterval(()=>{if(!U)return;upd()},100);
+setInterval(save,3000);
+addEventListener('pagehide',save);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)save()});
+</script></body></html>
